@@ -36,13 +36,13 @@ def ssk(L, k, data, Nconfigs, Nparta, Npartb = 0, sim="single"):
     
     if sim == "single":
         Sout = np.zeros([len(k)])
-        Sout = S
+        Sout = S.real()
         
     if sim == "mixture":
         Sout = np.zeros([len(k), 3])
-        Sout[:,0] = Sii
-        Sout[:,1] = Sjj
-        Sout[:,2] = Sij
+        Sout[:,0] = Sii.real()
+        Sout[:,1] = Sjj.real()
+        Sout[:,2] = Sij.real()
         
     return k, k_counts, Sout
 
