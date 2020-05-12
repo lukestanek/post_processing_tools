@@ -60,7 +60,7 @@ def kspace_setup(kx, ky, kz):
                                  for j in ky_arr 
                                  for k in kz_arr] 
 
-    # Compute wave number magnitude - dont use |k| (skipping first entry in k_arr)
+    # Compute wave number magnitude - dont use |k| = 0 (skipping first entry in k_arr)
     k_mag = np.sqrt(np.sum(np.array(k_arr)**2, axis=1)[..., None])
 
     # Add magnitude to wave number array
@@ -93,7 +93,7 @@ def sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Npart, r_array, k_counts):
         if Nsnap%100 ==0:
             print(Nsnap)
 
-        # fix k
+        # fix k-value
         for k in range(len(k_arr)):
             
             # Set accumulator to  for each k-value in a snapshot
