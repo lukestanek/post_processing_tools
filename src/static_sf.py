@@ -29,7 +29,8 @@ def ssk(L, k, data, Nconfigs, Nparta, Npartb = 0, sim="single"):
         rb_array = data[rb_inds,:]
         
         start = time.time()
-        Sii, Sjj, Sij = multi_sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Nparta, Npartb, ra_array[0,:,1:], rb_array[0,:,1:], k_counts)
+        Sii, Sjj, Sij = multi_sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Nparta, 
+                                         Npartb, ra_array[0,:,1:], rb_array[0,:,1:], k_counts)
         end = time.time()
 
         print("Elapsed Time: ", end-start, " seconds")
@@ -59,7 +60,7 @@ def kspace_setup(kx, ky, kz):
                                  for j in ky_arr 
                                  for k in kz_arr] 
 
-    # Compute wave number magnitude - dont use |k| (skipping first entry in k_arr)
+    # Compute wave number magnitude - dont use |k| = 0 (skipping first entry in k_arr)
     k_mag = np.sqrt(np.sum(np.array(k_arr)**2, axis=1)[..., None])
 
     # Add magnitude to wave number array
@@ -92,7 +93,7 @@ def sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Npart, r_array, k_counts):
         if Nsnap%100 ==0:
             print(Nsnap)
 
-        # fix k
+        # fix k-value
         for k in range(len(k_arr)):
             
             # Set accumulator to  for each k-value in a snapshot
@@ -101,32 +102,18 @@ def sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Npart, r_array, k_counts):
             # Loop over particle type a
             for i in range(Nsnap*Npart, (Nsnap + 1)*Npart):
 
-                # x value - check periodicity
-                xa = r_array[i,0]
-                
-
-                # y value - check periodicity
-                ya = r_array[i,1]
-     
-                
-                # z value - check periodicity
-                za = r_array[i,2]
+                xa = r_array[i,0] # x value
+                ya = r_array[i,1] # y value
+                za = r_array[i,2] # z value
   
                 kdotra = (k_arr[k,0]/Lx * xa + k_arr[k,1]/Ly * ya +  k_arr[k,2]/Lz * za) * 2*np.pi
-               
-                
+       
                 S1 += np.exp(-1j * kdotra)
-    
             S2 = np.conj(S1)
-
             
             # Add S(k) to appropriate k location
             S[int(k_arr[k,-1])] += S1 * S2
-
-    
     return S/(Npart * Nconfigs * k_counts)
-
-
 
 @numba.jit 
 def multi_sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Nparta, Npartb, ra_array, rb_array, k_counts):
@@ -153,49 +140,31 @@ def multi_sk_compute(S, k_arr, Lx, Ly, Lz, Nconfigs, Nparta, Npartb, ra_array, r
             # Loop over particle type a
             for i in range(Nsnap*Nparta, (Nsnap + 1)*Nparta):
 
-                # x value - check periodicity
-                xa = ra_array[i,0]
-                
-
-                # y value - check periodicity
-                ya = ra_array[i,1]
-     
-                
-                # z value - check periodicity
-                za = ra_array[i,2]
+                xa = ra_array[i,0] # x value
+                ya = ra_array[i,1] # y value
+                za = ra_array[i,2] # z value
   
                 kdotra = (k_arr[k,0]/Lx * xa + k_arr[k,1]/Ly * ya +  k_arr[k,2]/Lz * za) * 2*np.pi
-               
-                
+              
                 Saa1 += np.exp(-1j * kdotra)
-    
             Saa2 = np.conj(Saa1)
         
             # Loop over particle type b
             for i in range(Nsnap*Npartb, (Nsnap + 1)*Npartb):
 
-                # x value - check periodicity
-                xb = rb_array[i,0]
-
-                # y value - check periodicity
-                yb = rb_array[i,1]
-
-                # z value - check periodicity
-                zb = rb_array[i,2]
+                xb = rb_array[i,0] # x value
+                yb = rb_array[i,1] # y value
+                zb = rb_array[i,2] # z value
 
                 kdotrb = (k_arr[k,0]/Lx * xb + k_arr[k,1]/Ly * yb +  k_arr[k,2]/Lz * zb) * 2*np.pi
                 
                 Sbb1 += np.exp(-1j * kdotrb)
-                
             Sbb2 = np.conj(Sbb1)
             
             # Add S(k) to appropriate k location
             Saa[int(k_arr[k,-1])] += Saa1 * Saa2
-            
             Sbb[int(k_arr[k,-1])] += Sbb1 * Sbb2
-            
             Sab[int(k_arr[k,-1])] += Saa2 * Sbb1
-            
-    
+           
     return Saa/(Nparta * Nconfigs * k_counts), Sbb/(Npartb * Nconfigs * k_counts), Sab/(Npartab * Nconfigs * k_counts) 
 
